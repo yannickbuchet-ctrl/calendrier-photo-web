@@ -40,7 +40,7 @@ export class Apercu {
 
   constructor(private readonly ctx: ContexteVues) {
     this.page = el("canvas", { class: "page-apercu", role: "img", tabindex: "0" });
-    this.planche = el("div", { class: "planche", role: "list", "aria-label": "Toutes les pages", hidden: true });
+    this.planche = el("div", { class: "planche", role: "group", "aria-label": "Toutes les pages", hidden: true });
     this.racine = el("div", { class: "zone-apercu" }, this.page, this.planche);
     new ResizeObserver(() => this.dessiner()).observe(this.racine);
     this.installerPointeur();
@@ -122,7 +122,10 @@ export class Apercu {
   }
 
   private installerPointeur() {
+    let dernierPointeur = "mouse";
+    this.page.addEventListener("pointerdown", (e) => (dernierPointeur = e.pointerType), { capture: true });
     this.page.addEventListener("dblclick", (e) => {
+      if (dernierPointeur !== "mouse" && dernierPointeur !== "pen") return; // au doigt : double appui, plus bas
       const emplacement = this.emplacementSous(e.offsetX, e.offsetY);
       if (emplacement !== null) this.ctx.recadrer(this.ctx.courant, emplacement);
     });
@@ -190,7 +193,7 @@ export class Apercu {
     while (this.planche.children.length > nombre) this.planche.lastElementChild!.remove();
     while (this.planche.children.length < nombre) {
       const i = this.planche.children.length;
-      const b = el("button", { type: "button", class: "miniature-page", role: "listitem" }, el("canvas"), el("span"));
+      const b = el("button", { type: "button", class: "miniature-page" }, el("canvas"), el("span"));
       b.addEventListener("click", () => this.ctx.ouvrirDepuisEnsemble(i));
       this.planche.append(b);
     }

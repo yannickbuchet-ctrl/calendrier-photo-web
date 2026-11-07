@@ -657,6 +657,7 @@ export class Application implements ContexteVues {
 
   /** Ouvre l'outil de recadrage (ou le choix d'une photo si l'emplacement est vide) (crop_photo). */
   async recadrer(index: number, emplacement: number) {
+    if (document.querySelector("dialog[open]")) return;
     const id = this.photoA(index, emplacement);
     if (!id) {
       await this.choisirPhoto(index, emplacement);

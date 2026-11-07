@@ -40,6 +40,25 @@ export interface TextePose {
   decoupe: Rect | null;
 }
 
+/**
+ * Texte que la police sait écrire : une lettre absente est remplacée par sa lettre de base (« ł » → « l »), ou par
+ * « ? » ; les émojis et symboles absents sont retirés. L'aperçu et le PDF écrivent ainsi exactement le même texte.
+ */
+export function texteImprimable(police: Police, texte: string): string {
+  let r = "";
+  for (const c of texte) {
+    const cp = c.codePointAt(0)!;
+    if (police.aLeCaractere(cp) || c === "\n") r += c;
+    else if (/\s/u.test(c)) r += " ";
+    else {
+      const base = c.normalize("NFD").replace(/\p{M}/gu, "");
+      if (base && base !== c && [...base].every((b) => police.aLeCaractere(b.codePointAt(0)!))) r += base;
+      else if (/[\p{L}\p{N}]/u.test(c)) r += "?";
+    }
+  }
+  return r;
+}
+
 /** Points de coupure : après les espaces, et après un trait d'union suivi d'une lettre (règles Unicode simplifiées). */
 function mots(texte: string): string[] {
   const r: string[] = [];
@@ -83,7 +102,7 @@ function couper(f: Fonte, paragraphe: string, largeurMax: number | null): string
  */
 export function poserTexte(r: Rect, drapeaux: number, texte: string, f: Fonte, pourMesurer = false): TextePose {
   const retour = (drapeaux & ALIGNEMENT.RETOUR) !== 0;
-  const paragraphes = texte.split(new RegExp("\\r\\n|\\n|\\r|" + String.fromCharCode(0x2028)));
+  const paragraphes = texteImprimable(f.police, texte).split(new RegExp("\\r\\n|\\n|\\r|" + String.fromCharCode(0x2028)));
   const lignesTexte = paragraphes.flatMap((p) => couper(f, p, retour ? Math.max(0, r.w) : null));
   const hauteurLigne = ascendant(f) + descendant(f);
   const ecart = interligne(f);

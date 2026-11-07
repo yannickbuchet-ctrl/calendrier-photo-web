@@ -166,6 +166,13 @@ async function nouvellePage(navigateur, options, nom) {
   return { contexte, page };
 }
 
+/** Attend que les réductions des photos (vignettes, aperçu) soient prêtes, pour une capture complète. */
+async function photosPretes(page) {
+  await page.waitForTimeout(300);
+  await page.waitForFunction(() => document.body.dataset.photos !== "preparation", null, { timeout: 300000 });
+  await page.waitForTimeout(300);
+}
+
 async function attendrePret(page) {
   await page.getByRole("heading", { name: "Réglages", exact: true }).waitFor();
   await page.waitForFunction(() => document.querySelector(".indicateur")?.textContent?.includes("Gardé"), null, { timeout: 30000 });
@@ -218,7 +225,7 @@ async function ordinateur(navigateur) {
 
   // Mars : l'anniversaire et l'âge dans la case du 14.
   await page.getByRole("button", { name: "Afficher Mars 2027 dans l'aperçu" }).click();
-  await page.waitForTimeout(1200);
+  await photosPretes(page);
   await page.screenshot({ path: path.join(captures, "calendrier.png") });
   await page.locator("canvas.page-apercu").screenshot({ path: path.join(travail, "apercu-mars.png") });
 
@@ -258,7 +265,7 @@ async function ordinateur(navigateur) {
 
   // Vue d'ensemble.
   await page.getByRole("button", { name: "Vue d'ensemble" }).first().click();
-  await page.waitForTimeout(1500);
+  await photosPretes(page);
   await page.screenshot({ path: path.join(captures, "vue-ensemble.png") });
   await page.getByRole("button", { name: "Juin 2027 : cliquez pour l'afficher en grand" }).click();
   verifier((await page.locator(".etiquette-page").textContent()).startsWith("Juin 2027"), "la vue d'ensemble devrait ouvrir juin");
@@ -314,7 +321,7 @@ async function ordinateur(navigateur) {
   await page.waitForTimeout(2000);
   verifier(JSON.stringify((await photosDesPages(page)).slice(1)) === JSON.stringify(REFERENCES.exemples.plans[0]), "photos après reprise");
   await page.getByRole("button", { name: "Afficher Mars 2027 dans l'aperçu" }).click();
-  await page.waitForTimeout(1500);
+  await photosPretes(page);
   await page.locator("canvas.page-apercu").screenshot({ path: path.join(travail, "apercu-mars-reprise.png") });
   resultats.reprise = "calendrier repris après rechargement : photos, recadrage, anniversaires";
 
@@ -334,7 +341,7 @@ async function ordinateur(navigateur) {
   const [c2] = await Promise.all([sombre.page.waitForEvent("filechooser"), sombre.page.getByRole("button", { name: "Remplir automatiquement…" }).first().click()]);
   await c2.setFiles(exemples);
   await sombre.page.getByRole("dialog", { name: "Remplissage automatique" }).getByRole("button", { name: "OK", exact: true }).click({ timeout: 120000 });
-  await sombre.page.waitForTimeout(1500);
+  await photosPretes(sombre.page);
   await sombre.page.screenshot({ path: path.join(captures, "sombre.png") });
   await sombre.contexte.close();
 }
@@ -368,7 +375,7 @@ async function telephone(navigateur) {
   const [choix] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("menuitem", { name: "Remplir automatiquement…" }).tap()]);
   await choix.setFiles(exemples);
   await page.getByRole("dialog", { name: "Remplissage automatique" }).getByRole("button", { name: "OK", exact: true }).tap({ timeout: 120000 });
-  await page.waitForTimeout(1500);
+  await photosPretes(page);
   await page.screenshot({ path: path.join(captures, "telephone-apercu.png") });
 
   // Glisser vers la gauche : page suivante.
@@ -451,7 +458,7 @@ async function mesure(navigateur) {
     const texteBilan = await bilan.innerText();
     verifier(texteBilan.includes("36 photo(s) réparties sur 12 mois, de la plus ancienne (03/01/2027)"), `dates EXIF des grandes photos : ${texteBilan}`);
     await bilan.getByRole("button", { name: "OK", exact: true }).click();
-    await page.waitForTimeout(3000);
+    await photosPretes(page);
     if (nom === "ordinateur") await page.locator("canvas.page-apercu").screenshot({ path: path.join(travail, "grandes-janvier.png") });
     const debut = Date.now();
     const { resultat: chemin, gel } = await mesurerGel(page, () => telechargement(page, async () => {

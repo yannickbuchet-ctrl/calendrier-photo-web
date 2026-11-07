@@ -73,6 +73,8 @@ export class Application implements ContexteVues {
       this.apercu.dessiner();
       this.cartes.mettreAJour();
     };
+    // Réductions des photos en préparation (indication utilisée par les essais automatiques).
+    this.bibliotheque.surActivite = (actif) => (document.body.dataset.photos = actif ? "preparation" : "pretes");
     this.panneau = new PanneauReglages({
       changer: (modif) => this.changerReglages(modif),
       essayerCouleur: (couleur) => {

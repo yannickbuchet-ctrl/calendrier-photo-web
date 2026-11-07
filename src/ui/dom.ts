@@ -89,7 +89,8 @@ export function bouton(nomIcone: string, libelle: string, action: (ev: MouseEven
   const b = el("button", {
     type: "button", class: `bouton ${options.classe ?? ""}`.trim(),
     title: options.raccourci ? `${aide} (${options.raccourci})` : aide,
-    "aria-label": options.texte === false ? libelle : null,
+    // Nom accessible fixe : le libellé visible peut être masqué sur un écran étroit.
+    "aria-label": libelle,
     "aria-pressed": options.bascule ? "false" : null,
     "aria-keyshortcuts": options.raccourci ?? null,
   });

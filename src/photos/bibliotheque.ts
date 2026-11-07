@@ -33,6 +33,8 @@ export class Bibliotheque {
   budget: number;
   /** Appelé quand une image devient disponible (pour redessiner). */
   surImage: () => void = () => {};
+  /** Appelé quand la préparation des réductions commence (true) ou se termine (false). */
+  surActivite: (actif: boolean) => void = () => {};
 
   constructor(budget: number) {
     this.budget = budget;
@@ -103,6 +105,7 @@ export class Bibliotheque {
   private async travailler() {
     if (this.occupe) return;
     this.occupe = true;
+    this.surActivite(true);
     try {
       for (;;) {
         const cle = this.demandes.pop();
@@ -133,6 +136,7 @@ export class Bibliotheque {
       }
     } finally {
       this.occupe = false;
+      this.surActivite(false);
     }
   }
 

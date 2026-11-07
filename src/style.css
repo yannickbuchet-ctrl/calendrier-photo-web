@@ -268,6 +268,7 @@ dialog footer { padding: 12px 20px 16px; display: flex; gap: 8px; justify-conten
   .navigation-pages { gap: 4px; padding: 6px; }
   .navigation-pages .bouton { min-height: 44px; min-width: 44px; padding: 6px 8px; }
   .navigation-pages .bouton .libelle { font-size: 0.9em; }
+  .navigation-pages .telephone .libelle { display: none; }
   .etiquette-page { min-width: 0; flex: 1 1 100%; order: -1; font-size: 0.92em; }
   .panneau-reglages, .panneau-pages {
     display: none; position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; max-height: 86dvh; height: 86dvh;

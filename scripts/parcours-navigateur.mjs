@@ -13,7 +13,7 @@ import { decodePDFRawStream, PDFArray, PDFDict, PDFDocument, PDFName, PDFRawStre
 
 const racine = path.resolve(import.meta.dirname, "..");
 const captures = path.join(racine, "captures");
-const travail = path.join(racine, "dist", "parcours");
+const travail = path.join(racine, "essais");
 fs.mkdirSync(captures, { recursive: true });
 fs.mkdirSync(travail, { recursive: true });
 const PORT = 4180;
@@ -84,6 +84,32 @@ async function lirePdf(octets) {
   return pages;
 }
 
+/** Rend une page d'un PDF avec PDF.js dans Chromium (contrôle à l'œil du fichier exporté). */
+async function rendrePdf(navigateur, pdf, numero, image) {
+  const build = path.join(racine, "node_modules/pdfjs-dist/build");
+  const page = await navigateur.newPage({ viewport: { width: 900, height: 1300 } });
+  await page.route("http://local/**", (route) => {
+    const nom = route.request().url().slice("http://local/".length);
+    if (nom === "index.html") return route.fulfill({ contentType: "text/html", body: "<canvas id=c></canvas>" });
+    if (nom === "doc.pdf") return route.fulfill({ contentType: "application/pdf", body: fs.readFileSync(pdf) });
+    return route.fulfill({ contentType: "text/javascript", body: fs.readFileSync(path.join(build, nom)) });
+  });
+  await page.goto("http://local/index.html");
+  await page.evaluate(async (n) => {
+    const pdfjs = await import("http://local/pdf.mjs");
+    pdfjs.GlobalWorkerOptions.workerSrc = "http://local/pdf.worker.mjs";
+    const doc = await pdfjs.getDocument({ url: "http://local/doc.pdf" }).promise;
+    const p = await doc.getPage(n);
+    const vue = p.getViewport({ scale: 1.2 });
+    const c = document.getElementById("c");
+    c.width = vue.width;
+    c.height = vue.height;
+    await p.render({ canvasContext: c.getContext("2d"), viewport: vue, canvas: c }).promise;
+  }, numero);
+  await page.locator("#c").screenshot({ path: image });
+  await page.close();
+}
+
 /** Projet gardé par le navigateur (sauvegarde automatique, IndexedDB). */
 function lireSauvegarde(page) {
   return page.evaluate(() => new Promise((ok, ko) => {
@@ -133,7 +159,8 @@ async function mesurerGel(page, action) {
 /** Mémoire privée totale du navigateur (processus principal et ses enfants), relevée toutes les 300 ms (Windows). */
 function suivreMemoire(pid) {
   if (process.platform !== "win32" || !pid) return { arreter: async () => null };
-  const script = `$r=${pid}; while($true){ $t=Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,PrivatePageCount; $ids=@($r); do { $a=$false; foreach($p in $t){ if(($ids -contains $p.ParentProcessId) -and -not($ids -contains $p.ProcessId)){ $ids+=$p.ProcessId; $a=$true } } } while($a); ($t | Where-Object { $ids -contains $_.ProcessId } | Measure-Object -Property PrivatePageCount -Sum).Sum; Start-Sleep -Milliseconds 300 }`;
+  // Descendants de ce script dont le nom est celui de Chromium (le serveur Vite et ce relevé ne comptent pas).
+  const script = `$r=${pid}; while($true){ $t=Get-CimInstance Win32_Process -Property Name,ProcessId,ParentProcessId,PrivatePageCount; $ids=@($r); do { $a=$false; foreach($p in $t){ if(($ids -contains $p.ParentProcessId) -and -not($ids -contains $p.ProcessId)){ $ids+=$p.ProcessId; $a=$true } } } while($a); ($t | Where-Object { ($ids -contains $_.ProcessId) -and ($_.Name -match 'chrom|headless') } | Measure-Object -Property PrivatePageCount -Sum).Sum; Start-Sleep -Milliseconds 300 }`;
   const ps = spawn("powershell.exe", ["-NoProfile", "-Command", script], { stdio: ["ignore", "pipe", "ignore"] });
   const valeurs = [];
   ps.stdout.on("data", (d) => String(d).split(/\r?\n/).filter(Boolean).forEach((l) => valeurs.push(Number(l))));
@@ -289,6 +316,7 @@ async function ordinateur(navigateur) {
   verifier(images.every((i) => i.ppp <= 300.5), "photos au plus à 300 ppp");
   verifier(pdf[3].texte.includes("Mars") && pdf[3].texte.includes("Léa (fictive) (8 ans)"), `texte de mars : ${pdf[3].texte.slice(0, 300)}`);
   verifier(pdf[6].texte.includes("Fête de la musique") && pdf[1].texte.includes("Jour de l'an") && pdf[1].texte.includes("zone C"), "texte des pages");
+  await rendrePdf(navigateur, cheminPdf, 4, path.join(captures, "pdf-mars.png"));
   const ppp = images.map((i) => i.ppp);
   resultats.pdfModeles = `13 pages A4 (595,28 × 841,89 pt), 36 photos de ${Math.round(Math.min(...ppp))} à ${Math.round(Math.max(...ppp))} ppp (photos modèles de 1800 × 1200 px, jamais agrandies), ${(fs.statSync(cheminPdf).size / 1048576).toFixed(1)} Mo, ${resultats.exportModelesMs} ms, gel maximal ${gel} ms`;
 
@@ -430,7 +458,7 @@ async function telephone(navigateur) {
 /* --- Mesure : 36 grandes photos ---------------------------------------------------------------------------------------- */
 
 async function mesure(navigateur) {
-  const dossier = path.join(racine, "dist", "photos-test");
+  const dossier = path.join(racine, "essais", "photos-test");
   if (!fs.existsSync(path.join(dossier, "IMG_0036.jpg"))) {
     console.log("Création des 36 grandes photos de test (scripts/grandes_photos.py)…");
     execFileSync("python", [path.join(racine, "scripts/grandes_photos.py"), dossier], { stdio: "inherit" });
@@ -446,7 +474,7 @@ async function mesure(navigateur) {
     await page.goto(`http://localhost:${PORT}/`);
     await page.waitForFunction(() => document.querySelector(".indicateur")?.textContent?.includes("Gardé"), null, { timeout: 30000 });
     if (ralenti > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: ralenti });
-    const memoire = suivreMemoire(navigateur.process()?.pid);
+    const memoire = suivreMemoire(process.pid);
     const debutImport = Date.now();
     if (nom === "téléphone") await page.getByRole("button", { name: "Photos", exact: true }).click();
     const declencheur = nom === "téléphone" ? page.getByRole("menuitem", { name: "Remplir automatiquement…" }) : page.getByRole("button", { name: "Remplir automatiquement…" }).first();
@@ -471,6 +499,8 @@ async function mesure(navigateur) {
     const pdf = await lirePdf(fs.readFileSync(chemin));
     const images = pdf.flatMap((p) => p.images);
     verifier(pdf.length === 13 && images.length === 36, `PDF des grandes photos (${nom})`);
+    // Janvier : la photo 02, portrait enregistré couché (orientation EXIF 6), doit être droite.
+    if (nom === "ordinateur") await rendrePdf(navigateur, chemin, 2, path.join(travail, "grandes-pdf-janvier.png"));
     verifier(images.every((i) => i.ppp <= 300.5) && images.some((i) => i.ppp > 299), "photos à 300 ppp au plus");
     resultats[`mesure ${nom}`] = {
       photos: `36 photos de 12 Mpx (${(taille / 1048576).toFixed(0)} Mo)`,

@@ -1,6 +1,7 @@
 # Dépendances et site construit
 node_modules/
 dist/
+essais/
 *.log
 
 # Photos et données personnelles : jamais dans le dépôt (projets, anniversaires, calendriers exportés).

@@ -353,6 +353,19 @@ async function ordinateur(navigateur) {
   await page.locator("canvas.page-apercu").screenshot({ path: path.join(travail, "apercu-mars-reprise.png") });
   resultats.reprise = "calendrier repris après rechargement : photos, recadrage, anniversaires";
 
+  // Photo déjà utilisée, même sous un autre nom : l'application prévient.
+  const copie = path.join(travail, "copie sous un autre nom.jpg");
+  fs.copyFileSync(exemples[5], copie);
+  const [choixCopie] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: "Ajouter des photos…" }).first().click()]);
+  await choixCopie.setFiles(copie);
+  const doublon = page.getByRole("dialog", { name: "Photo déjà utilisée" });
+  await doublon.waitFor({ timeout: 30000 });
+  const texteDoublon = await doublon.innerText();
+  verifier(texteDoublon.includes("Février 2027"), `avertissement de doublon : ${texteDoublon}`);
+  await page.screenshot({ path: path.join(travail, "doublon.png") });
+  await doublon.getByRole("button", { name: "Annuler", exact: true }).click();
+  resultats.doublon = texteDoublon.split("\n").filter(Boolean).slice(1, 3).join(" ");
+
   // Impression : 13 pages préparées en images (200 ppp), la fenêtre d'impression est simulée.
   await page.getByRole("button", { name: "Imprimer", exact: true }).first().click();
   await page.getByRole("dialog", { name: "Pages sans photo" }).getByRole("button", { name: "Imprimer", exact: true }).click();

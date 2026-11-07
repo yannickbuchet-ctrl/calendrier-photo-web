@@ -107,6 +107,20 @@ describe("export PDF", () => {
     expect(textes[12]).toContain("Noël");
   });
 
+  for (const [style, nom] of [[1, "Gelasio"], [2, "Kalam"]] as const) {
+    it(`police ${nom} : intégrée et lisible, accents compris`, async () => {
+      const projet = projetVide();
+      projet.reglages.year = 2027;
+      projet.reglages.font = style;
+      projet.reglages.title = "Été à Nîmes — « Œuvres »";
+      const octets = await creerPdf(donneesRendu(projet), preparerFactice, { titre: "t", application: "a" });
+      expect((await lirePdf(octets)).polices.every((p) => p.includes(nom))).toBe(true);
+      const textes = await texteDesPages(octets);
+      expect(textes[0]).toContain("Été à Nîmes — « Œuvres »");
+      expect(textes[2]).toContain("Février");
+    });
+  }
+
   it("police réduite aux glyphes utilisés : relisible et bien plus légère", () => {
     const p = police(2, false);
     const glyphes = [..."Janvier 2027 Léa"].map((c) => p.glyphe(c.codePointAt(0)!));

@@ -4,7 +4,7 @@
  */
 import type { Rect } from "../logique/disposition";
 import { rectangleArrondi } from "./chemins";
-import type { PageDessinee } from "./page";
+import type { Operation, PageDessinee } from "./page";
 import type { Police } from "./police";
 
 type Contexte = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -26,6 +26,8 @@ export interface OptionsCanevas {
   polices: { normal: Police; gras: Police };
   /** Couleur d'une photo pas encore chargée. */
   attente?: string;
+  /** Photo déjà découpée à sa partie visible (impression) : dessinée telle quelle dans sa cible. */
+  decoupee?: (op: Extract<Operation, { type: "photo" }>) => CanvasImageSource | null;
 }
 
 const glyphesEnCache = new WeakMap<Police, Map<number, Path2D>>();
@@ -110,6 +112,15 @@ export function dessinerSurCanevas(ctx: Contexte, page: PageDessinee, o: Options
         break;
       }
       case "photo": {
+        const deja = o.decoupee?.(op);
+        if (deja) {
+          ctx.save();
+          tracer(ctx, op.cible, op.rayon);
+          ctx.clip();
+          ctx.drawImage(deja, op.cible.x, op.cible.y, op.cible.w, op.cible.h);
+          ctx.restore();
+          break;
+        }
         const image = o.image(op.id);
         const dimensions = o.dimensions(op.id);
         ctx.save();

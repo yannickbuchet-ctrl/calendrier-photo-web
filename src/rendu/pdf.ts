@@ -13,11 +13,11 @@ import { dimensionsMm, type Rect } from "../logique/disposition";
 import { pagesDu } from "../logique/reglages";
 import { rectangleArrondi } from "./chemins";
 import { dessinerPage, type DonneesRendu } from "./page";
+import { pixelsPhoto, QUALITE_JPEG } from "./pixels";
 import type { Police } from "./police";
 
 export const POINTS_PAR_UNITE = 72 / 300;
-/** Qualité des JPEG des photos (comme le PDF de la version Windows, très peu compressé). */
-export const QUALITE_JPEG = 0.92;
+export { pixelsPhoto, QUALITE_JPEG };
 
 /** Une photo prête pour le PDF : JPEG de la partie visible, à la taille d'impression. */
 export interface PhotoPdf {
@@ -44,12 +44,6 @@ export class ExportAnnule extends Error {
     super("Export annulé.");
     this.name = "AbortError";
   }
-}
-
-/** Pixels de la photo dans le PDF : 300 ppp à sa taille d'impression, sans agrandir une photo plus petite. */
-export function pixelsPhoto(cible: Rect, source: Rect): { largeur: number; hauteur: number } {
-  const k = Math.min(1, source.w / cible.w, source.h / cible.h);
-  return { largeur: Math.max(1, Math.round(cible.w * k)), hauteur: Math.max(1, Math.round(cible.h * k)) };
 }
 
 /** Police intégrée au PDF (type 0, glyphes désignés par leur numéro), complétée à la fin avec les glyphes utilisés. */

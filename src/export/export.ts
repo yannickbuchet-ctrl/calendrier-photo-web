@@ -5,7 +5,6 @@
 import { analyserProjet, donneesProjet, type Projet } from "../logique/projet";
 import type { PhotoMemoire } from "../photos/bibliotheque";
 import { chargerPolices } from "../rendu/polices-web";
-import { creerPdf, ExportAnnule } from "../rendu/pdf";
 import { preparateur, type PhotoAExporter } from "./preparation";
 import type { MessageExport } from "./travailleur";
 
@@ -31,10 +30,12 @@ export async function exporterPdf(projet: Projet, photo: (id: string) => PhotoMe
     try {
       return await dansUnWorker(projet, photos, titre, application, suivi);
     } catch (e) {
-      if (e instanceof ExportAnnule || !(e instanceof ErreurWorker)) throw e;
+      if (!(e instanceof ErreurWorker)) throw e;
       console.warn("Export dans la page (Worker indisponible)", e);
     }
   }
+  // Sans Worker : pdf-lib est chargé ici, seulement dans ce cas.
+  const { creerPdf } = await import("../rendu/pdf");
   const polices = await chargerPolices(projet.reglages.font);
   const parId = new Map(photos.map((p) => [p.id, p]));
   const preparer = preparateur(parId, suivi.illisible);
@@ -84,7 +85,9 @@ function dansUnWorker(projet: Projet, photos: PhotoAExporter[], titre: string, a
         ok(m.pdf);
       } else {
         finir();
-        ko(m.annule ? new ExportAnnule() : new Error(m.message));
+        const erreur = new Error(m.annule ? "Export annulé." : m.message);
+        if (m.annule) erreur.name = "AbortError";
+        ko(erreur);
       }
     };
     worker.onerror = (e) => {

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Calendrier Photo Web</title>
+    <meta name="description" content="Créez un calendrier avec vos photos et exportez-le en PDF prêt à imprimer, entièrement dans votre navigateur : vos photos ne quittent jamais votre appareil." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#2563eb" />
+    <!-- La politique de sécurité (aucune ressource extérieure, rien n'est envoyé) est ajoutée à la construction : voir vite.config.ts. -->
+    <link rel="icon" href="./icone.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+  </head>
+  <body>
+    <div id="application"></div>
+    <noscript>
+      <p class="sans-script">Calendrier Photo Web a besoin de JavaScript : tout le travail sur vos photos se fait dans votre navigateur.</p>
+    </noscript>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

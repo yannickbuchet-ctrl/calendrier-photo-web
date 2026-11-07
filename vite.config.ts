@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import { defineConfig, type Plugin } from "vitest/config";
 
 /**
@@ -28,19 +31,22 @@ function politiqueDeSecurite(): Plugin {
 }
 
 /**
- * Hors ligne : le service worker (public/sw.js) reçoit la liste des fichiers du site construit, qu'il garde dès la
- * première visite. Les photos modèles (exemples/) n'y sont pas : elles ne sont téléchargées que si on les demande.
+ * Hors ligne : le service worker (sw/sw.js) reçoit la liste des fichiers du site construit, qu'il garde dès la
+ * première visite, et un nom de cache propre à cette version. Les photos modèles (exemples/) n'y sont pas : elles ne
+ * sont téléchargées que si on les demande.
  */
 function listeHorsLigne(): Plugin {
   return {
     name: "liste-hors-ligne",
     apply: "build",
     generateBundle(_options, bundle) {
-      const fichiers = Object.keys(bundle).filter((f) => !f.endsWith(".map") && !f.startsWith("exemples/"));
-      const sw = bundle["sw.js"];
-      if (sw && sw.type === "asset") {
-        sw.source = String(sw.source).replace("const FICHIERS = [];", `const FICHIERS = ${JSON.stringify(fichiers)};`);
-      }
+      const fichiers = [...new Set(["./", "index.html", "manifest.webmanifest", "icone.svg", ...Object.keys(bundle).filter((f) => !f.endsWith(".map"))])];
+      const version = createHash("sha256").update(fichiers.sort().join("\n")).digest("hex").slice(0, 12);
+      const modele = fs.readFileSync(path.resolve(import.meta.dirname, "sw/sw.js"), "utf8");
+      this.emitFile({
+        type: "asset", fileName: "sw.js",
+        source: modele.replace("const FICHIERS = [];", `const FICHIERS = ${JSON.stringify(fichiers)};`).replace("VERSION", version),
+      });
     },
   };
 }

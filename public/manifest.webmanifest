@@ -1,0 +1,24 @@
+{
+  "name": "Calendrier Photo Web",
+  "short_name": "Calendrier Photo",
+  "description": "Calendriers photo à imprimer, créés entièrement dans le navigateur : vos photos restent sur votre appareil.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#2563eb",
+  "icons": [{ "src": "icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "application/x-calendrier-photo": [".calendrier"],
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/png": [".png"],
+        "image/webp": [".webp"],
+        "image/heic": [".heic"]
+      }
+    }
+  ]
+}

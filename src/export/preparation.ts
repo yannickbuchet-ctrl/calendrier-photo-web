@@ -1,6 +1,7 @@
 /** Préparation des photos pour le PDF : la partie visible, à 300 ppp au plus, en JPEG (utilisée dans le Worker ou ici). */
 import { decoder, liberer, versJpeg, type MetaDecodage } from "../photos/decodage";
-import { QUALITE_JPEG, type PreparerPhoto } from "../rendu/pdf";
+import type { PreparerPhoto } from "../rendu/pdf";
+import { QUALITE_JPEG } from "../rendu/pixels";
 
 export interface PhotoAExporter extends MetaDecodage {
   id: string;

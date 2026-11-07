@@ -65,13 +65,16 @@ export function boolPython(v: unknown): boolean {
   return true;
 }
 
+/** Fins de ligne reconnues par str.splitlines() (séparateurs de ligne et de paragraphe Unicode compris). */
+const SEPARATEURS_LIGNES = "\n\r\v\f\x1c\x1d\x1e\x85" + String.fromCharCode(0x2028, 0x2029);
+
 /** str.splitlines() de Python (sans les fins de ligne). */
 export function lignesPython(t: string): string[] {
   const lignes: string[] = [];
   let debut = 0;
   for (let i = 0; i < t.length; i++) {
     const c = t[i];
-    if ("\n\r\v\f\x1c\x1d\x1e\x85  ".includes(c)) {
+    if (SEPARATEURS_LIGNES.includes(c)) {
       lignes.push(t.slice(debut, i));
       if (c === "\r" && t[i + 1] === "\n") i++;
       debut = i + 1;

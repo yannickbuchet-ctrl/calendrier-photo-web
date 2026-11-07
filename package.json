@@ -1,0 +1,29 @@
+{
+  "name": "calendrier-photo-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Calendrier Photo Web : calendriers photo à imprimer, créés entièrement dans le navigateur.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@expo-google-fonts/gelasio": "^0.4.1",
+    "@expo-google-fonts/kalam": "^0.4.1",
+    "@expo-google-fonts/open-sans": "^0.4.2",
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "jpeg-js": "^0.4.4",
+    "pdfjs-dist": "^6.5.438",
+    "playwright": "^1.65.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}

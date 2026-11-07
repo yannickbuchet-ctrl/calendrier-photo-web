@@ -1,0 +1,34 @@
+# Dépendances et site construit
+node_modules/
+dist/
+*.log
+
+# Photos et données personnelles : jamais dans le dépôt (projets, anniversaires, calendriers exportés).
+*.jpg
+*.jpeg
+*.JPG
+*.JPEG
+*.png
+*.PNG
+*.heic
+*.HEIC
+*.heif
+*.webp
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.calendrier
+*.json
+*.csv
+*.pdf
+*.zip
+
+# Exceptions explicites : les photos modèles (paysages dessinés, aucune photo réelle) et les captures du README.
+!public/exemples/*.jpg
+!captures/*.png
+
+# Fichiers de configuration du projet (JSON indispensables à la construction).
+!package.json
+!package-lock.json
+!tsconfig.json

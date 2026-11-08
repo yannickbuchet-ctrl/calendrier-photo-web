@@ -4,6 +4,8 @@ Créez un calendrier personnalisé avec vos photos, puis exportez-le en PDF prê
 navigateur**, sur ordinateur, tablette ou téléphone. Une à quatre photos par mois, jours fériés et vacances scolaires
 françaises, anniversaires et événements.
 
+**Ouvrir le site : <https://yannickbuchet-ctrl.github.io/calendrier-photo-web/>**
+
 C'est la version web de [Calendrier Photo](https://github.com/yannickbuchet-ctrl/calendrier-photo), l'application
 pour Windows : mêmes pages, même remplissage automatique, mêmes fichiers d'anniversaires.
 
